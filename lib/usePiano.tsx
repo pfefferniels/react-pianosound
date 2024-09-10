@@ -49,18 +49,34 @@ export const PianoContextProvider = ({ velocities, children }: PianoContextProvi
 
 const isNoteOn = (event: AnyEvent) => event.type === 'channel' && event.subtype === 'noteOn'
 const isNoteOff = (event: AnyEvent) => event.type === 'channel' && event.subtype === 'noteOff'
+
 const isPedalOn = (event: AnyEvent) => (
   event.type === 'channel'
   && event.subtype === 'controller'
   && event.controllerType === MIDIControlEvents.SUSTAIN
   && event.value > 63
 )
+
 const isPedalOff = (event: AnyEvent) => (
   event.type === 'channel'
   && event.subtype === 'controller'
   && event.controllerType === MIDIControlEvents.SUSTAIN
   && event.value <= 63
 )
+
+const isSoftPedalOn = (event: AnyEvent) => {
+  return event.type === 'channel'
+    && event.subtype === 'controller'
+    && event.controllerType === MIDIControlEvents.SOFT_PEDAL
+    && event.value > 63
+}
+
+const isSoftPedalOff = (event: AnyEvent) => {
+  return event.type === 'channel'
+    && event.subtype === 'controller'
+    && event.controllerType === MIDIControlEvents.SOFT_PEDAL
+    && event.value <= 63
+}
 
 export const usePiano = () => {
   const context = useContext(PianoContext);
@@ -74,14 +90,28 @@ export const usePiano = () => {
     const events = addAbsoluteTime(file)
     piano.toDestination()
 
+    const softRegions = events
+      .reduce((arr, event) => {
+        if (isSoftPedalOn(event)) {
+          arr.push([event.abs, null])
+        }
+        else if (isSoftPedalOff(event) && arr[arr.length - 1]) {
+          arr[arr.length - 1][1] = event.abs
+        }
+        return arr
+      }, new Array<[number, number | null]>())
+
     for (const event of events) {
+      const insideSoft = softRegions.findIndex(region => region[0] < event.abs && region[1] !== null && region[1] > event.abs) !== -1
+
       transport.schedule(() => {
         cb && cb(event)
 
         if (isNoteOn(event)) {
           piano.keyDown({
             note: event.noteNumber.toString(),
-            velocity: convertRange(Math.min(60, event.velocity), [30, 60], [0.2, 0.8])
+            velocity:
+              convertRange(Math.min(60, event.velocity), [30, 60], [0.2, 0.8]) * (insideSoft ? 0.67 : 1)
           });
         }
         else if (isNoteOff(event)) {
