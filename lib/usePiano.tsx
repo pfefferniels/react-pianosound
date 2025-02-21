@@ -23,6 +23,9 @@ interface PianoContextProviderProps {
 
 export const PianoContextProvider = ({ velocities, children }: PianoContextProviderProps) => {
   const [piano] = useState(() => {
+    const context = new Tone.Context();
+    Tone.setContext(context);
+
     const initializedPiano = new Piano({
       velocities: velocities || 5,
     });
@@ -111,7 +114,7 @@ export const usePiano = () => {
           piano.keyDown({
             note: event.noteNumber.toString(),
             velocity:
-              convertRange(Math.min(60, event.velocity), [30, 60], [0.2, 0.8]) * (insideSoft ? 0.67 : 1)
+              convertRange(event.velocity, [0, 127], [0, 1]) * (insideSoft ? 0.67 : 1)
           });
         }
         else if (isNoteOff(event)) {
