@@ -107,26 +107,32 @@ export const usePiano = () => {
     for (const event of events) {
       const insideSoft = softRegions.findIndex(region => region[0] < event.abs && region[1] !== null && region[1] > event.abs) !== -1
 
-      transport.schedule(() => {
+      transport.schedule((time) => {
         cb && cb(event)
 
         if (isNoteOn(event)) {
           piano.keyDown({
             note: event.noteNumber.toString(),
             velocity:
-              convertRange(event.velocity, [0, 127], [0, 1]) * (insideSoft ? 0.67 : 1)
+              convertRange(event.velocity, [0, 127], [0, 1]) * (insideSoft ? 0.67 : 1),
+            time
           });
         }
         else if (isNoteOff(event)) {
           piano.keyUp({
-            note: event.noteNumber.toString()
+            note: event.noteNumber.toString(),
+            time
           })
         }
         else if (isPedalOn(event)) {
-          piano.pedalDown()
+          piano.pedalDown({
+            time
+          })
         }
         else if (isPedalOff(event)) {
-          piano.pedalUp()
+          piano.pedalUp({
+            time
+          })
         }
       }, event.abs / 1000)
     }
