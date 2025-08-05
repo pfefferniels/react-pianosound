@@ -1,4 +1,5 @@
-import { PianoContextProvider, usePiano } from '../lib/usePiano'
+import { usePiano } from '../lib/usePiano'
+import { PianoContextProvider } from '../lib/PianoContext'
 
 const Keyboard = () => {
   const { playSingleNote } = usePiano()

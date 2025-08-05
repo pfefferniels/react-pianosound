@@ -1,54 +1,14 @@
-import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
-import { Piano } from "@tonejs/piano/build/piano/Piano";
+import { useContext } from 'react';
 import * as Tone from 'tone'
 import { AnyEvent, MIDIControlEvents, MidiFile } from 'midifile-ts';
 import { addAbsoluteTime } from './MidiNote';
+import { PianoContext } from './PianoContext';
 
 function convertRange(value: number, r1: [number, number], r2: [number, number]) {
   return (value - r1[0]) * (r2[1] - r2[0]) / (r1[1] - r1[0]) + r2[0];
 }
 
 export type EventListener = (e: AnyEvent) => void
-
-interface PianoContextProps {
-  piano: Piano;
-}
-
-const PianoContext = createContext<PianoContextProps | undefined>(undefined);
-
-interface PianoContextProviderProps {
-  velocities?: number
-  children: ReactNode
-}
-
-export const PianoContextProvider = ({ velocities, children }: PianoContextProviderProps) => {
-  const [piano] = useState(() => {
-    const context = new Tone.Context();
-    Tone.setContext(context);
-
-    const initializedPiano = new Piano({
-      velocities: velocities || 5,
-    });
-
-    (async () => {
-      await initializedPiano.load();
-    })();
-
-    return initializedPiano.toDestination();
-  });
-
-  useEffect(() => {
-    return () => {
-      piano.disconnect()
-    };
-  }, [piano]);
-
-  return (
-    <PianoContext.Provider value={{ piano }}>
-      {children}
-    </PianoContext.Provider>
-  );
-};
 
 const isNoteOn = (event: AnyEvent) => event.type === 'channel' && event.subtype === 'noteOn'
 const isNoteOff = (event: AnyEvent) => event.type === 'channel' && event.subtype === 'noteOff'
@@ -86,10 +46,15 @@ export const usePiano = () => {
   if (!context) {
     throw new Error('usePiano must be used within a PianoContextProvider');
   }
-  const { piano } = context
+  const { piano, status } = context
   const transport = Tone.getTransport()
 
   const play = (file: MidiFile, cb?: EventListener) => {
+    if (!piano) {
+      console.log('Piano not loaded yet')
+      return
+    }
+
     const events = addAbsoluteTime(file)
     piano.toDestination()
 
@@ -143,6 +108,8 @@ export const usePiano = () => {
   }
 
   const stopAll = () => {
+    if (!piano) return
+
     transport.stop()
     transport.position = 0
     transport.cancel()
@@ -151,6 +118,7 @@ export const usePiano = () => {
 
   const playSingleNote = (pitch: number, durationMs: number = 500, velocity?: number) => {
     if (!piano) return
+    
     piano.toDestination();
     piano.keyDown({
       note: pitch.toString(),
@@ -167,6 +135,7 @@ export const usePiano = () => {
   };
 
   return {
+    status,
     play,
     playSingleNote,
     stop: stopAll,
