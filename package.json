@@ -1,7 +1,6 @@
 {
   "name": "react-pianosound",
-  "private": true,
-  "version": "0.0.0",
+  "version": "0.0.1",
   "type": "module",
   "files": [
     "dist"
@@ -22,8 +21,8 @@
     "@tonejs/piano": "^0.2.1",
     "events": "^3.3.0",
     "midifile-ts": "^1.5.1",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1",
     "tone": "^14.9.17",
     "webmidi": "^2.5.1"
   },
