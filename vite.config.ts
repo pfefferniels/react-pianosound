@@ -9,13 +9,16 @@ export default defineConfig({
     react(),
     dts({ include: ['lib'] })
   ],
+  optimizeDeps: {
+    include: ['events', '@tonejs/piano'],
+  },
   build: {
     lib: {
       entry: resolve(__dirname, 'lib/main.ts'),
       formats: ['es']
     },
     rollupOptions: {
-      external: ['react', 'react/jsx-runtime'],
+      external: ['react', 'react-dom', 'react/jsx-runtime'],
     }
   }
 })

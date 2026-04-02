@@ -21,10 +21,12 @@
     "@tonejs/piano": "^0.2.1",
     "events": "^3.3.0",
     "midifile-ts": "^1.5.1",
-    "react": "^19.1.1",
-    "react-dom": "^19.1.1",
     "tone": "^14.9.17",
     "webmidi": "^2.5.1"
+  },
+  "peerDependencies": {
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
   },
   "devDependencies": {
     "@types/node": "^20.12.12",
