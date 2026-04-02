@@ -1,2 +1,2 @@
-export { usePiano } from './usePiano'
+export { usePiano, usePianoEvents } from './usePiano'
 export { PianoContextProvider } from './PianoContext'
