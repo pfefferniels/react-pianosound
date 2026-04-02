@@ -1,30 +1,68 @@
-# React + TypeScript + Vite
+# react-pianosound
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React hooks for playing MIDI files through a sampled piano (via [Tone.js](https://tonejs.github.io/) and [@tonejs/piano](https://github.com/tambien/Piano)) or a connected hardware MIDI output. Handles sample loading, sustain/soft pedal, and transport control.
 
-Currently, two official plugins are available:
+## Install
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+```sh
+npm install react-pianosound
+```
 
-## Expanding the ESLint configuration
+Peer dependencies: `react` and `react-dom` 19+.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+## Usage
 
-- Configure the top-level `parserOptions` property like this:
+```tsx
+import { PianoContextProvider, usePiano } from "react-pianosound";
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
+function App() {
+  return (
+    <PianoContextProvider velocities={5}>
+      <Player />
+    </PianoContextProvider>
+  );
+}
+
+function Player() {
+  const { status, play, stop, playSingleNote, device } = usePiano();
+
+  if (status === "loading") return <p>Loading samples...</p>;
+
+  return (
+    <>
+      <p>Output: {device}</p>
+      <button onClick={() => playSingleNote(60)}>Play Middle C</button>
+      <button onClick={() => stop()}>Stop</button>
+    </>
+  );
 }
 ```
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+`play(midiFile)` accepts a parsed `MidiFile` (from [midifile-ts](https://github.com/ryohey/midifile-ts)) and schedules all events on the Tone.js transport. If a hardware MIDI output is detected, events are routed there instead.
+
+## API
+
+### `<PianoContextProvider velocities?={number}>`
+
+Initializes the piano sampler. `velocities` controls how many velocity layers are loaded (default 5).
+
+### `usePiano()`
+
+Returns:
+
+| Field | Description |
+|---|---|
+| `status` | `'loading'` \| `'done'` \| `'error'` \| `undefined` |
+| `play(file, cb?)` | Schedule and start MIDI playback |
+| `stop()` | Stop playback, release all notes |
+| `playSingleNote(pitch, durationMs?, velocity?)` | Play a single MIDI note |
+| `jumpTo(seconds)` | Seek the transport |
+| `device` | Name of the active output (`'synthetic'` or hardware name) |
+
+### `usePianoEvents(listener)`
+
+Subscribe to playback events. The listener receives `{ event, transportSeconds }` for every scheduled MIDI event during playback.
+
+## License
+
+MIT
